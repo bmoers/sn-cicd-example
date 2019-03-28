@@ -1,19 +1,27 @@
-# Example implementation of the CICD Server V3 for ServiceNow
+# Example implementation of the CICD-Server V3 for ServiceNow
+
 
 ## Table of contents
 
 - [Features](#features)
-- [How to start](#how-to-start)
+- [Example Pipeline](#example-pipeline)
+- [Before you start](#before-you-start)
+    - [Prerequisites](#prerequisites)
+    - [Install the Scoped App](#install-the-scoped-app)
+    - [Configure the CICD-Integration in ServiceNow](#configure-the-cicd-integration-in-servicenow)
+    - [Install the CICD-Server](#install-the-cicd-server)
+- [Configure the CICD-Server](#configure-the-cicd-server)
 - [Start the CICD-Server](#start-the-cicd-server)
-- [Basic Example](#basic-example)
-- [Configure ServiceNow to 'build' and Update-Set](#Configure-ServiceNow-to-'build'-an-Update-Set)
+    - [Docker](#docker)
+- [Quick Start](#quick-start)
+- [Configure ServiceNow to 'build' a scoped application](#Configure-ServiceNow-to-'build'-an-Update-Set)
 - [Prerequisites](#prerequisites)
 - [Contribute](#contribute)
 - [Dependencies](#dependencies)
 
 ## Features
 
-This is an example implementation of the [CICD Server](https://github.com/bmoers/sn-cicd) for [ServiceNow](https://www.servicenow.com/). It allows to send changes captured in Update-Sets in ServiceNow to a CICD pipeline including running ATF test cases in ServiceNow.\
+This is an example implementation of the [CICD-Server](https://github.com/bmoers/sn-cicd) for [ServiceNow](https://www.servicenow.com/). It allows to send changes, captured in Update-Sets in ServiceNow, to a CICD pipeline including running ATF test cases in ServiceNow.\
 Example build results:
 - [Code extraction](https://github.com/bmoers/sn-cicd-example-v3/tree/master/example/repo)
 - [ESLint report](http://htmlpreview.github.io/?https://github.com/bmoers/sn-cicd-example-v3/blob/master/example/doc/lint/index.html)
@@ -21,41 +29,109 @@ Example build results:
 
 More information about the core module can be found here https://github.com/bmoers/sn-cicd#cicd-server-for-service-now-v3
 
-A video recording from the K18 session, where CICD Server version 1 was presented, can be found [here](https://youtu.be/8v6zc2Qgjm4).
+A video recording from the K18 session, where CICD-Server version 1 was presented, can be found [here](https://youtu.be/8v6zc2Qgjm4).
 
-## How to start
 
-Install the Scoped App:
-- Clone the [CICD-Integration](https://github.com/bmoers/sn-cicd-integration) repo and, if required, run `gulp namespace --name your-name-space` to change the namespace (your company ServiceNow prefix)
-- Install the update-set from ./update_set/CICD Integration.xml in your ServiceNow instance.
-- Create a CI-User account in ServiceNow and assign it to the `cicd_integration_user` group
--  Optionally create a 
-    - ATF-User account in ServiceNow and assign it to the `atf_test_*` and `impersonator` groups
-    - CD-User account in ServiceNow and assign it to the `admin` **!** group
+## Example Pipeline
+In this example you're going to:
+- extract an scoped app into a GIT repository
+- run a CICD pipeline to test the code quality, document the code and run ATF tests
+- do code review
+- raise a pull request against master (the status of the code in the production environment)
+- deploy the scoped app
 
-Get a copy of this repo:
+ As the code is stored in a GIT repo, one can also hook in other standard CICD build tools to trigger further actions like performance or UAT.\
+ The process requires two environment. One acts as 'source' (the development environment) - one acts as 'master' and 'target' environment. This is just to simplify the demo setup.
 
+
+
+## Before you start
+
+### Prerequisites
+- Minimum 2 ServiceNow instances. 1 as DEV, 1 as PROD.
+- The Dev instance has a running and validated MID server.
+- The host of the CICD-Server (in this demo this is your PC) can be reached by the MID server.
+- A [GitHub](https://github.com) account.
+- A Access token for your this GitHub account with the privileges repo, admin:repo_hook, admin:org_hook. (Goto https://github.com/settings/tokens to configure one)
+- Git client installed and configured to connect to [Github via SSH](https://help.github.com/en/articles/connecting-to-github-with-ssh)
+- The [CICD Integration app](https://github.com/bmoers/sn-cicd-integration/blob/master/update_set/CICD%20Integration.xml) installed on all ServiceNow instances.
+
+### Install the Scoped App
+- Install the latest version of the CICD-Integration app from [GitHub](https://github.com/bmoers/sn-cicd-integration/blob/master/update_set/CICD%20Integration.xml) on all ServiceNow environments (source and target). Alternatively you can clone the [CICD-Integration](https://github.com/bmoers/sn-cicd-integration) repo and install the update-set from ./update_set/CICD Integration.xml.
+- On all instances configure following users: *(for testing purpose you can also skip below and use the 'admin' user later in the configuration)*
+    - Create a CI-User account in ServiceNow and assign it to the `cicd_integration_user` group.
+    - Create a ATF-User account in ServiceNow and assign it to the `atf_test_*` and `impersonator` groups.
+    - Create a CD-User account in ServiceNow and assign it to the `admin` **!** group
+
+### Configure the CICD-Integration in ServiceNow
+Navigate to 'CICD Integration > Properties'
+- [x] CICD Integration enabled 
+- [x] Show CICD UI action in scoped apps 
+- [x] Trigger CICD process on update set 'complete'
+- Enter the CICD-Server Host Name (the host / IP of your PC). If you use Docker or have a MID server running on your PC this can be https://localhost:8443
+- [x] Connect to CICD-Server via MID Server
+- [x] Pull Request Proxy switch
+
+
+### Install the CICD-Server
+- Get a copy of this repo:
 ```bash
 git clone git@github.com:bmoers/sn-cicd-example-v3.git
 
 cd sn-cicd-example-v3
 ```
 
-Configure the CICD Server
-- Rename `example.env` to `.env` - default variables should work for now.
-- Set credentials for CI user\
-    CICD_CI_USER_NAME='CI-USER-NAME'\
-    CICD_CI_USER_PASSWORD='********'
-- Optionally set the credentials for
-    - CI-User\
-        CICD_ATF_TEST_USER_NAME='ATF-USER-NAME'\
-        CICD_ATF_TEST_USER_PASSWORD='********'
-    - CD-User\
-        CICD_CD_USER_NAME='CD-USER-NAME'\
-        CICD_CD_USER_PASSWORD='********'
+## Configure the CICD-Server
+- **Rename `example.env` to `.env`**\
+    This file contains all credentials and necessary information to run the CICD-Server. Make sure you **never** commit it to a GIT repo.
 
-Install and configure GIT client:
-- GIT client is installed and configured (id_rsa.pub) to connect to your GIT repo service.
+> Assuming two ServiceNow environments
+> - dev12345.service-now.com The Dev instance (&lt;dev12345-dev-instance;&gt;)
+> - dev23456.service-now.com The Prod instance (&lt;dev23456-prod-instance;&gt;)
+> 
+
+Add following information to the .env file:
+
+
+```bash
+# ----- !! REQUIRED !! -----
+# github credentials
+CICD_PR_USER_NAME=<github-user-id>
+# the github token (or password)
+CICD_PR_USER_PASSWORD=<******************************>
+# ServiceNow host name - this host acts as proxy to route the web hooks to the CICD-Server (via MID)
+CICD_WEBHOOK_PROXY_SERVER=<dev12345-dev-instance>
+# Secret (see cicd-integration properties in ServiceNow)
+CICD_WEBHOOK_SECRET=5VCSj9SPRH3EbNHrBSTf
+#GitHub project information
+CICD_GIT_HOST=git@github.com:<github-user-id>/
+CICD_GIT_URL=https://github.com/<github-user-id>/
+
+# default git master source - let this point to production environment
+CICD_GIT_MASTER_SOURCE=<dev23456-prod-instance>.service-now.com
+
+# user to run the ATF test cases
+CICD_ATF_TEST_USER_NAME=admin
+CICD_ATF_TEST_USER_PASSWORD=<***********>
+
+# user to load update-set form 'source' and 'master'
+CICD_CI_USER_NAME=admin
+CICD_CI_USER_PASSWORD=<***********>
+
+# user to deploy update-set to 'target'
+CICD_CD_USER_NAME=admin
+CICD_CD_USER_PASSWORD=<***********>
+
+# deployment target definition
+CICD_CD_DEPLOYMENT_TARGET=<dev23456-prod-instance>.service-now.com
+
+# ----- ** OPTIONAL ** -----
+# toggle slack integration
+CICD_SLACK_ENABLED=true
+# webhook url
+CICD_SLACK_WEBHOOK=https://hooks.slack.com/services/<********>/<********>/<*****************************>
+
+```
 
 ## Start the CICD-Server
 
@@ -75,128 +151,33 @@ The web-UI is available under http://localhost:8080/ (depending of your server-o
 If HTTPS is enabled you might see a "page not secure" warning. This is due to self signed certificates in this example project.\
 It requires a run at least one build to display any information.
 
-## Basic Example
+## Docker
+If you'd like to run the CICD-Server as a Docker container please have a look at the Dockerfile. Use Docker Compose to also start a MID server.
 
-### Trigger a CICD Run
+## Trigger a CICD Run
 
-- Logon to a ServiceNow instance. E.g. personal developer instance on https://developer.servicenow.com/
-- Do setup as described above.
-- Make sure the settings in `.env` are correct and the CICD-Server is started.
-- In left navigation, search for 'CICD Integration'. Open 'properties' and make sure that:
-    - 'CICD Integration switch' is checked
-    - 'The CICD Server Run API URL' is set to your workplace/server IP/host address, e.g. 'http[s]://192.168.1.10/run'
-    - 'Connect to CICD Server via MID Serve' is checked
-- Create an Update-Set. Make it your current update-set, keep a copy of the sys_id.
-- Create e.g. a script_include including JsDoc tags to be sent to the CICD pipeline.
-    ```js
-    /**
-     * Class Description
-     * 
-     * @class 
-     * @author Boris Moers
-     * @memberof global.module:sys_script_include
-     */
-    var CicdDemo = Class.create();
-    CicdDemo.prototype = /** @lends global.module:sys_script_include.CicdDemo.prototype */ {
-        /**
-         * Constructor
-         * 
-         * @returns {undefined}
-         */
-        initialize: function () { 
-            
-        },
+TL;DR: 
+* Install the [example application](https://github.com/bmoers/sn-cicd-example-v3/tree/master/example/cicd_test_application_sys_remote_update_set.xml) 
+* open the App /sys_app.do?sys_id=CICD%20Test%20Application 
+* click on "Build this Application [CICD]"
 
-        /**
-         * A test function
-         * 
-         * @param {any} string the string to test
-         * @returns {boolean} a true boolean
-         */
-        test: function (string) {
+1. Logon to a ServiceNow instance dev12345.service-now.com (get a personal developer instance on https://developer.servicenow.com/).
+2. Create a Scoped App.\
+    Navigate to "System Applications > Applications" and select "New > Start from scratch". Name it "CICD Global Test App".
+3. Add some files to it like e.g business rule or script include. Use the the UI Action with the 'Box' icon to automatically comment the code.
+4.  In the left navigation, open this Application definition again. "System Applications > Applications", click on "CICD Global Test App".
+5. Trigger the CICD Pipeline by just clicking on the "Build this Application [CICD]" UI Action.
+6. This will now :
+    - extract the coe from 'master'
+    - create an 'update set' branch and extract the update set into it
+    - build the app (EsLint, JsDoc, Mocha [ATF])
+7. Once all test are 'green' a pull request will be raised against master.
+    - If you have Slack enabled in the configuration above you'll see corresponding messages
+8. Navigate now to GitHub, open the pull request and review the code.
+9. If you're happy with it, approve the pull request.
+10. The 'update set' branch will be merged with the 'master' branch.  
+11. The application (update set) is now automatically deployed.
 
-            return true;
-        },
-        type: 'CicdDemo'
-    };
-    ```
-
-- In a ServiceNow background script run 
-    ```js
-    var run = new CiCdRun();
-    run.now({
-        "requestor": {
-            "userName": "UserName",
-            "fullName": "User Full Name",
-            "email": "user@email.com"
-        },
-        "updateSet": "<the update-set sys_id>",
-        "application": {
-            "id": "<the scope sys_id>",
-            "name": "Application Name"
-        },
-        "git": {
-            "repository": "<repo_name>"
-        },
-        "source": {
-            "name": "https://source.service-now.com"
-        },
-        "master": {
-            "name": "https://target.service-now.com"
-        }
-    })
-    ```
-- Make sure the request was successfully sent to your CICD instance.
-- Navigate to http://localhost:8080 and check the progress.
-
-## Configure ServiceNow to 'build' an Update-Set
-
-Add a business rule to send a REST message to your CICD-server.\
-Post a payload like below with `new CiCdRun().now(payload);` to the CICD Server.
-
-```js
-{
-    "updateSet": null,         // the sys_id of the update set to be extracted
-    "application": {
-        "id": null,            // either the sys_id of an application (scope) or the id of a container grouping files
-        "name": null           // the name of the application / container
-    },
-    "requestor": {
-        "userName": null,      // the person requesting the CICD pipeline to run [default user.getName()]
-        "fullName": null,      // full name of that person [default user.getFullName()]
-        "email": null          // email of same [default user.getEmail()]
-    },
-    "atf": {
-        "updateSetOnly": false // [optional] set to true if only ATF test IN the update-set shall be executed. if false it runs all test of the application.
-    },
-    "git": {
-        "repository": null,    // git repo. e.g. 'sn-cicd.git'
-        "remoteUrl": null,     // [optional] repo full url with out git repo appended. e.g. 'ssh://git@github.com/project/repo.git'
-        "url": null            // [optional] repo full url with out git repo appended. e.g. 'https://github.com/project/repo'
-    },
-    "source": {
-        "name": null           // the source system of the update set e.g. https://companydev.service-now.com [default gs.getProperty('glide.servlet.uri')]
-    },
-    "master": {
-        "name": null           // the master system of the update set. this must be production-like e.g. https://companypreprod.service-now.com
-    },
-    "target": {
-        "name": null           // the target system to deploy the update set e.g. https://companytest.service-now.com
-    }
-}
-```
-
-- If you dont want to pull from production, remove the "master" option in the json. 
-- If you dont want to automatically deploy, remove the "target" option in the json.
-
-
-## Prerequisites
-
-1) Write a business rule to trigger the CICD pipeline from ServiceNow
-    - e.g. replace the "complete" value from the Update-Set screen with "Build"
-2) If you're using the GIT feature:
-    - make sure the current user has GIT correctly configured and can access the repo (SSH key)
-    - implement the functions `createRemoteRepo()`, `pendingPullRequest()` and `raisePullRequest()`
 
 ## Contribute
 
