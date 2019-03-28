@@ -1,6 +1,6 @@
 {
   "name": "sn-cicd-example",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "Sample implementation of sn-cicd",
   "main": "server.js",
   "scripts": {
