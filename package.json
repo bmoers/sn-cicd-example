@@ -13,12 +13,12 @@
   "author": "Boris Moers",
   "license": "ISC",
   "dependencies": {
-    "bluebird": "3.5.1",
-    "dotenv": "6.0.0",
-    "nodemon": "1.17.3",
-    "object-assign-deep": "0.4.0",
-    "request": "2.88.0",
-    "request-promise": "4.2.2",
+    "bluebird": "^3.5.1",
+    "dotenv": "^6.0.0",
+    "nodemon": "^1.17.3",
+    "object-assign-deep": "^0.4.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2",
     "sn-cicd": "github:bmoers/sn-cicd#semver:^3"
   }
 }
