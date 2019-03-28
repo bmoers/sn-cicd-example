@@ -1,4 +1,4 @@
-version: '2.1'
+version: '3.2'
 
 services:
   mid-server:
@@ -6,7 +6,12 @@ services:
     build: mid-server/.
     hostname: mid-server
     #image: toolsproservia/sn-mid-server
-    env_file: .env
+    #env_file: .env
+    environment:
+      SN_URL: dev12345
+      SN_USER: admin
+      SN_PASSWORD: '**********'
+      SN_MID_NAME: mid-docker-01
     volumes: 
       ["./logs:/opt/agent/logs"]
     networks:
