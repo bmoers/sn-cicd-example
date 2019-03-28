@@ -22,6 +22,7 @@ CICD.prototype.init = function (mode) {
 
 
 CICD.prototype.registerGitHubWebHook = function (repoName) {
+    const self = this;
     return Promise.try(() => {
 
         /*
@@ -47,7 +48,7 @@ CICD.prototype.registerGitHubWebHook = function (repoName) {
             const registered = hooks.some((hook) => hook.name == 'web');
             if (registered)
                 return console.log("Hook is already registered.")
-          
+
             /*
                 register the webhook
             */
@@ -71,33 +72,83 @@ CICD.prototype.registerGitHubWebHook = function (repoName) {
                         "url": `https://${process.env.CICD_WEBHOOK_PROXY_SERVER}.service-now.com/api/devops/cicd/pull_request`,
                         "content_type": "json",
                         "secret": process.env.CICD_WEBHOOK_SECRET,
-                        "insecure_ssl" : 1
+                        "insecure_ssl": 1
                     }
                 }
             }).then((result) => {
                 console.log('Hook successfully registered.')
             });
-                
+
         });
-        
+
     });
 };
 
 CICD.prototype.createRemoteRepo = function (config, repoName) {
+    const self = this;
     return Promise.try(() => {
         /*
             code to create remote git repo if required
         */
-        /*
+
+        return Promise.try(() => {
+            /*
+                code to create the repo if required
+            */
+            return rp({
+                method: 'GET',
+                uri: `https://api.github.com/repos/${process.env.CICD_PR_USER_NAME}/${repoName}`,
+                json: true,
+                auth: {
+                    username: process.env.CICD_PR_USER_NAME,
+                    password: process.env.CICD_PR_USER_PASSWORD
+                },
+                headers: {
+                    'User-Agent': process.env.CICD_PR_USER_NAME
+                }
+            }).then((result) => {
+                console.log("repo exists", result.html_url)
+            }).catch((e) => {
+                if (e.statusCode != 404) {
+                    console.error("Somethings not right with the GitHub Access")
+                    return;
+                }
+
+                console.log("repository does not exist. will create a new one named", repoName);
+                return rp({
+                    method: 'POST',
+                    uri: `https://api.github.com/user/repos`,
+                    json: true,
+                    auth: {
+                        username: process.env.CICD_PR_USER_NAME,
+                        password: process.env.CICD_PR_USER_PASSWORD
+                    },
+                    headers: {
+                        'User-Agent': process.env.CICD_PR_USER_NAME
+                    },
+                    body: {
+                        name: repoName,
+                        description: 'cicd repo for demo',
+                        private: false
+                    }
+                }).then((result) => {
+                    console.log("repo created", result.html_url)
+                })
+            })
+        }).then(() => {
+            /*
             THIS IS 'MISUSED' FOR DEMO PURPOSE
             USE THIS METHOD TO CREATE THE REPO IF REQUIRED.
 
-        */
-        return self.registerGitHubWebHook(repoName);
+            */
+            return self.registerGitHubWebHook(repoName);
+        });
+
     });
 };
 
 CICD.prototype.pendingPullRequest = function ({ config, repoName, from }) {
+    const self = this;
     /*
         THIS IS AN 'GITHUB' EXAMPLE IMPLEMENTATION
     */
@@ -121,11 +172,17 @@ CICD.prototype.pendingPullRequest = function ({ config, repoName, from }) {
             return result.filter((pr) => {
                 return (pr.head.ref == from)
             }).length;
+        }).catch((e) => {
+            if (e.statusCode != 404) {
+                console.error("Somethings not right with the GitHub Access")
+                return;
+            }
         });
     });
 };
 
 CICD.prototype.raisePullRequest = function ({ config, requestor, repoName, from, to, title, description }) {
+    const self = this;
     /*
         THIS IS AN 'GITHUB' EXAMPLE IMPLEMENTATION
     */
@@ -150,7 +207,7 @@ CICD.prototype.raisePullRequest = function ({ config, requestor, repoName, from,
                 'User-Agent': process.env.CICD_PR_USER_NAME
             }
         }).then(function (response) {
-            console.log('raisePullRequest', response);
+            console.log('Pull request raised', response.url);
             return response;
         });
     });
@@ -166,15 +223,15 @@ CICD.prototype.raisePullRequest = function ({ config, requestor, repoName, from,
  * @returns {Promise<Array>} a list of files
  *//*
 CICD.prototype.getApplicationFiles = function (ctx) {
-    return Promise.try(() => {
+return Promise.try(() => {
 
-            //code to export all "master" file information in a format of
-            //[{
-            //    className: 'sys_script_include',
-            //    sysId: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-            //}]
-        return [];
-    });
+//code to export all "master" file information in a format of
+//[{
+//    className: 'sys_script_include',
+//    sysId: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+//}]
+return [];
+});
 };
 */
 
@@ -183,15 +240,15 @@ CICD.prototype.getApplicationFiles = function (ctx) {
  * @param {*} config 
  *//*
 CICD.prototype.getApplicationTestSuites = function (config) {
-    return Promise.try(() => {
+return Promise.try(() => {
 
-            //code to export all test suite information in a format of
-            // [{ 
-            //    className: 'className',
-            //    sysId: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-            // }]
-        return [];
-    });
+//code to export all test suite information in a format of
+// [{ 
+//    className: 'className',
+//    sysId: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+// }]
+return [];
+});
 };
 */
 
@@ -200,14 +257,14 @@ CICD.prototype.getApplicationTestSuites = function (config) {
  * @param {*} config 
  *//*
 CICD.prototype.getApplicationTests = function (config) {
-    return Promise.try(() => {
-            //code to export all test information in a format of
-            //[{
-            //    className: 'className',
-            //    sysId: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-            //}]
-        return [];
-    });
+return Promise.try(() => {
+//code to export all test information in a format of
+//[{
+//    className: 'className',
+//    sysId: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+//}]
+return [];
+});
 };
 */
 
@@ -220,7 +277,7 @@ CICD.prototype.convertBuildBody = function (body) {
                 fullName: null,
                 email: null
             },
-            atf: { 
+            atf: {
                 name: null,
                 updateSetOnly: false
             },
@@ -298,35 +355,39 @@ CICD.prototype.gitPullRequestProxyConvertBody = function (body) {
        */
         /*
             {
-                "action": "${PULL_REQUEST_ACTION}",
-                "comment": "${PULL_REQUEST_COMMENT_TEXT}",
+                "action": "DECLINED",
+                "comment": "",
                 "request": {
-                    "id": "${PULL_REQUEST_ID}",
-                    "name": "${PULL_REQUEST_TITLE}",
-                    "url": "${PULL_REQUEST_URL}"
+                    "id": "7",
+                    "name": "Virtual Application - APP - 1.1.4 (Boris Moers) #2",
+                    "url": "https://git.example.com/projects/SNOW/repos/sn_virtual_application/pull-requests/7"
                 },
                 "author": {
-                    "name": "${PULL_REQUEST_USER_DISPLAY_NAME}"
+                    "name": "Boris Moers"
                 },
-                "reviewers": ["${PULL_REQUEST_REVIEWERS}"],
+                "reviewers": "Abishek Singh,Boris Moers,Gurpreet Matharu,Martin Frain,Nisha Vickraman,Rajiv H R,Shiva Prasadr,Vishwanathan Vijayabarath",
                 "source": {
-                    "project": "${PULL_REQUEST_FROM_REPO_PROJECT_KEY}",
-                    "repository": "${PULL_REQUEST_FROM_REPO_NAME}",
-                    "branch": "${PULL_REQUEST_FROM_BRANCH}"
+                    "project": "SNOW",
+                    "repository": "sn_virtual_application",
+                    "branch": "virtual-application---app---1-1-4-@87cf4f03dbe52b00323efc600f961966"
                 },
                 "target": {
-                    "project": "${PULL_REQUEST_TO_REPO_PROJECT_KEY}",
-                    "repository": "${PULL_REQUEST_TO_REPO_NAME}",
-                    "branch": "${PULL_REQUEST_TO_BRANCH}"
+                    "project": "SNOW",
+                    "repository": "sn_virtual_application",
+                    "branch": "master"
                 }
-            }
+}
         */
         const gitPayload = body;
         const pr = gitPayload.pull_request;
 
+        if (!pr)
+            return {};
+
         return assign({
             action: undefined,
             comment: undefined,
+            mergeId: undefined,
             request: {
                 id: undefined,
                 name: undefined,
@@ -347,14 +408,27 @@ CICD.prototype.gitPullRequestProxyConvertBody = function (body) {
                 branch: undefined
             }
         }, {
-            action: (gitPayload.action == 'closed' && pr.merged) ? 'merged' : (gitPayload.action == 'closed' && !pr.merged) ? 'declined' : gitPayload.action,
-            source: {
-                branch: pr.head.ref
-            }, 
-            target: {
-                branch: pr.base.ref
-            }
-        });
+                action: (gitPayload.action == 'closed' && pr.merged) ? 'merged' : (gitPayload.action == 'closed' && !pr.merged) ? 'declined' : gitPayload.action,
+                mergeId: pr.merge_commit_sha,
+                request: {
+                    id: pr.number,
+                    name: pr.title,
+                    url: pr.html_url
+                },
+                author: {
+                    name: pr.user.login
+                },
+                source: {
+                    project: pr.head.repo.full_name.split('/')[0],
+                    repository: pr.head.repo.full_name.split('/')[1],
+                    branch: pr.head.ref
+                },
+                target: {
+                    project: pr.base.repo.full_name.split('/')[0],
+                    repository: pr.base.repo.full_name.split('/')[1],
+                    branch: pr.base.ref
+                }
+            });
     });
 };
 
