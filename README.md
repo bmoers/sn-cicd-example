@@ -171,7 +171,7 @@ Or create the app manually:
 4.  In the left navigation, open this Application definition again. "System Applications > Applications", click on "CICD Global Test App".
 5. Trigger the CICD Pipeline by just clicking on the "Build this Application [CICD]" UI Action.
 6. This will now :
-    - extract the coe from 'master'
+    - extract the code from 'master'
     - create an 'update set' branch and extract the update set into it
     - build the app (EsLint, JsDoc, Mocha [ATF])
 7. Once all test are 'green' a pull request will be raised against master.
