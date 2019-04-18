@@ -55,6 +55,7 @@ In this example you're going to:
 - A Access token for your this GitHub account with the privileges repo, admin:repo_hook, admin:org_hook. (Goto https://github.com/settings/tokens to configure one)
 - Git client installed and configured to connect to [Github via SSH](https://help.github.com/en/articles/connecting-to-github-with-ssh)
 - The [CICD Integration app](https://github.com/bmoers/sn-cicd-integration/blob/master/update_set/CICD%20Integration.xml) installed on all ServiceNow instances.
+- ATF Test Suite Execution is enabled on all environment under 'Automated Test Framework > Administration > [Properties](https://customer.service-now.com/system_properties_ui.do?sysparm_title=Automated%20Test%20Framework%20Properties&sysparm_category=Test%20and%20Test%20Suite%20Properties)'
 
 ### Install the Scoped App
 - Install the latest version of the CICD-Integration app from [GitHub](https://github.com/bmoers/sn-cicd-integration/blob/master/update_set/CICD%20Integration.xml) on all ServiceNow environments (source and target). Alternatively you can clone the [CICD-Integration](https://github.com/bmoers/sn-cicd-integration) repo and install the update-set from ./update_set/CICD Integration.xml.
@@ -64,12 +65,13 @@ In this example you're going to:
     - Create a CD-User account in ServiceNow and assign it to the `admin` **!** group
 
 ### Configure the CICD-Integration in ServiceNow
-Navigate to 'CICD Integration > Properties'
+Navigate to 'CICD Integration > Properties' and enable at least following:
 - [x] CICD Integration enabled 
 - [x] Show CICD UI action in scoped apps 
 - [x] Trigger CICD process on update set 'complete'
 - Enter the CICD-Server Host Name (the host / IP of your PC). If you use Docker or have a MID server running on your PC this can be https://localhost:8443
 - [x] Connect to CICD-Server via MID Server
+- [x] Show JSDoc button in UI to support developer to comment code correctly
 - [x] Pull Request Proxy switch
 
 
@@ -158,9 +160,10 @@ If you'd like to run the CICD-Server as a Docker container please have a look at
 
 TL;DR: 
 * Install the [example application](https://github.com/bmoers/sn-cicd-example-v3/tree/master/example/cicd_test_application_sys_remote_update_set.xml) 
-* open the App /sys_app.do?sys_id=CICD%20Test%20Application 
+* open the App (/sys_app.do?sys_id=CICD%20Test%20Application) 
 * click on "Build this Application [CICD]"
 
+Or create the app manually:
 1. Logon to a ServiceNow instance dev12345.service-now.com (get a personal developer instance on https://developer.servicenow.com/).
 2. Create a Scoped App.\
     Navigate to "System Applications > Applications" and select "New > Start from scratch". Name it "CICD Global Test App".
