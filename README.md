@@ -45,6 +45,7 @@ In this example you're going to:
  The process requires two environment. One acts as 'source' (the development environment) - one acts as 'master' and 'target' environment. This is just to simplify the demo setup.
 
 ## Demo Video
+A recording of this how-to can be found on YouTube
 [![A recording of this how-to](http://img.youtube.com/vi/u5I-fxvMcX4/0.jpg)](http://www.youtube.com/watch?v=u5I-fxvMcX4)
 
 
