@@ -5,6 +5,7 @@
 
 - [Features](#features)
 - [Example Pipeline](#example-pipeline)
+- [Demo Video](#demo-video)
 - [Before you start](#before-you-start)
     - [Prerequisites](#prerequisites)
     - [Install the Scoped App](#install-the-scoped-app)
@@ -43,6 +44,8 @@ In this example you're going to:
  As the code is stored in a GIT repo, one can also hook in other standard CICD build tools to trigger further actions like performance or UAT.\
  The process requires two environment. One acts as 'source' (the development environment) - one acts as 'master' and 'target' environment. This is just to simplify the demo setup.
 
+## Demo Video
+[![A recording of this how-to](http://img.youtube.com/vi/u5I-fxvMcX4/0.jpg)](http://www.youtube.com/watch?v=u5I-fxvMcX4)
 
 
 ## Before you start
