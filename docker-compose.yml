@@ -4,39 +4,29 @@ services:
   mid-server:
     image: mid-server-london
     build: mid-server/.
-    hostname: mid-server
-    #image: toolsproservia/sn-mid-server
-    #env_file: .env
     environment:
-      SN_URL: dev12345
+      SN_URL: dev00000
       SN_USER: admin
-      SN_PASSWORD: '**********'
-      SN_MID_NAME: mid-docker-01
+      SN_PASSWD: '**********'
+      SN_MID_NAME: mid-docker-02
     volumes: 
-      ["./logs:/opt/agent/logs"]
+      - "./logs:/opt/agent/logs"
     networks:
-      vpcbr:
-        ipv4_address: 10.5.0.5
+      - backend
 
-  sn-cicd-example-v3:
+  cicd:
     image: sn-cicd-example-v3
     build: .
     env_file: .env
-    environment:
-      NODE_ENV: production
     ports:
       - 8080:8080
       - 8443:8443
     volumes: 
-      ["./root:/opt/cicd"]
+      - "./root:/opt/cicd"
+      # dont use this in prod
+      - "/Users/user/.ssh:/home/node/.ssh"
     networks:
-      vpcbr:
-        ipv4_address: 10.5.0.6
+      - backend
 
 networks:
-  vpcbr:
-    driver: bridge
-    ipam:
-     config:
-       - subnet: 10.5.0.0/16
-         gateway: 10.5.0.1
+  backend:
