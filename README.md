@@ -1,4 +1,4 @@
-# Example implementation of the CICD-Server V3 for ServiceNow
+# Example implementation of the CICD-Server V4 for ServiceNow
 
 
 ## Table of contents
@@ -58,7 +58,7 @@ A recording of this how-to can be found on YouTube:\
 - A [GitHub](https://github.com) account.
 - A Access token for your this GitHub account with the privileges repo, admin:repo_hook, admin:org_hook. (Goto https://github.com/settings/tokens to configure one)
 - Git client installed and configured to connect to [Github via SSH](https://help.github.com/en/articles/connecting-to-github-with-ssh)
-- The [CICD Integration app](https://github.com/bmoers/sn-cicd-integration/blob/master/update_set/CICD%20Integration.xml) installed on all ServiceNow instances.
+- The [CICD Integration app v1.4](https://github.com/bmoers/sn-cicd-integration/blob/master/update_set/CICD%20Integration.xml) installed on all ServiceNow instances.
 - ATF Test Suite Execution is enabled on all environment under 'Automated Test Framework > Administration > [Properties](https://customer.service-now.com/system_properties_ui.do?sysparm_title=Automated%20Test%20Framework%20Properties&sysparm_category=Test%20and%20Test%20Suite%20Properties)'
 
 ### Install the Scoped App
