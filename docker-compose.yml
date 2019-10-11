@@ -1,27 +1,21 @@
-version: '3.2'
+version: "3.2"
 
 services:
   mid-server:
-    image: mid-server-london
-    build: mid-server/.
-    environment:
-      SN_URL: dev00000
-      SN_USER: admin
-      SN_PASSWD: '**********'
-      SN_MID_NAME: mid-docker-02
-    volumes: 
-      - "./logs:/opt/agent/logs"
+    image: moers/mid-server:madrid
+    env_file: mid.env
+    volumes: ["./logs:/opt/agent/logs"]
     networks:
       - backend
 
   cicd:
-    image: sn-cicd-example-v3
+    image: sn-cicd-example
     build: .
     env_file: .env
     ports:
       - 8080:8080
       - 8443:8443
-    volumes: 
+    volumes:
       - "./root:/opt/cicd"
       # dont use this in prod
       - "/Users/user/.ssh:/home/node/.ssh"
