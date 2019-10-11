@@ -55,7 +55,7 @@ typings/
 .yarn-integrity
 
 # dotenv environment variables file
-.env
+*.env
 
 .vscode
 develop
@@ -69,3 +69,5 @@ dev
 *.db
 bitbucket-config*
 server-options.json
+
+/root
