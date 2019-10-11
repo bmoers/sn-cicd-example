@@ -1,22 +1,23 @@
-FROM node:10.13-alpine
+FROM node:lts-alpine
 
-LABEL maintainer Boris Moers <boris.moers@gmail.com>
+# required for errors in npm ci
+RUN npm install npm@latest -g
 
-ENV CICD_ATF_BROWSER="/usr/bin/chromium-browser" \
-    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD="true"
-
-RUN apk update && apk upgrade && \
-    echo @edge http://nl.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories && \
-    echo @edge http://nl.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories && \
-    apk add --no-cache \
+# Installs latest Chromium (76) package.
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
     git \
-    openssh \
-    chromium@edge \
-    nss@edge \
-    freetype@edge \
-    harfbuzz@edge \
-    ttf-freefont@edge && \
+    openssh && \
     rm -rf /var/lib/apt/lists/*
+
+ENV CICD_ATF_BROWSER /usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 
 VOLUME ["/opt/cicd", "/home/node/.ssh"]
 
@@ -25,11 +26,10 @@ RUN chown node:node /usr/src/app
 
 USER node
 WORKDIR /usr/src/app
-COPY --chown=node:node ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
-RUN npm install --production
+COPY package*.json ./
+RUN npm install --no-optional && npm cache clean --force
 
-
-COPY --chown=node:node ["project-templates/", "modules/", "cicd.js", "server.js", "worker.js", "./"]
+COPY ["project-templates/", "modules/", "cicd.js", "server.js", "worker.js", "./"]
 
 EXPOSE 8080 8443
 CMD npm update && npm start
