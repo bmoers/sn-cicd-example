@@ -18,7 +18,7 @@ services:
     volumes:
       - "./root:/opt/cicd"
       # dont use this in prod
-      - "/Users/user/.ssh:/home/node/.ssh"
+      - "~/.ssh:/home/node/.ssh"
     networks:
       - backend
 
