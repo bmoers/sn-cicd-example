@@ -1,10 +1,11 @@
-FROM node:lts-alpine
+FROM node:11-alpine
 
 # required for errors in npm ci
 RUN npm install npm@latest -g
 
 # Installs latest Chromium (76) package.
 RUN apk add --no-cache \
+    curl \
     chromium \
     nss \
     freetype \
@@ -14,7 +15,11 @@ RUN apk add --no-cache \
     ttf-freefont \
     git \
     openssh && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    update-ca-certificates 
+
+ENV NODE_ENV production
+ENV NODE_EXTRA_CA_CERTS /etc/ssl/certs/ca-certificates.crt
 
 ENV CICD_ATF_BROWSER /usr/bin/chromium-browser
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
