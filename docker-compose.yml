@@ -3,6 +3,7 @@ version: "3.2"
 services:
   mid-server:
     image: moers/mid-server:madrid
+    hostname: mid-madrid
     env_file: mid.env
     volumes: ["./logs:/opt/agent/logs"]
     networks:
