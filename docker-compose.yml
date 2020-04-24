@@ -16,12 +16,29 @@ services:
     ports:
       - 8080:8080
       - 8443:8443
+      # websocket
+      - 4443:4443
     volumes:
       - "./root:/opt/cicd"
-      # dont use this in prod
+      # don't do this in prod!
       - "~/.ssh:/home/node/.ssh"
     networks:
       - backend
+
+#  mongo:
+#    container_name: mongo
+#    image: mongo
+#    restart: always
+#    environment:
+#      - MONGO_INITDB_ROOT_USERNAME=root
+#      - MONGO_INITDB_ROOT_PASSWORD=passwd
+#      - MONGO_NON_ROOT_USERNAME=cicd
+#      - MONGO_NON_ROOT_PASSWORD=passwd
+#    volumes:
+#      - ./root/mongo:/data/db
+#      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+#    networks:
+#     - backend
 
 networks:
   backend:
