@@ -87,7 +87,7 @@ CICD.prototype.registerGitHubWebHook = function (repoName) {
                         "pull_request"
                     ],
                     "config": {
-                        "url": `https://${process.env.CICD_WEBHOOK_PROXY_SERVER}.service-now.com/api/devops/cicd/pull_request`,
+                        "url": `https://${process.env.CICD_WEBHOOK_PROXY_SERVER}.${process.env.CICD_WEBHOOK_DOMAIN || 'service-now.com'}/api/devops/cicd/pull_request`,
                         "content_type": "json",
                         "secret": process.env.CICD_WEBHOOK_SECRET,
                         "insecure_ssl": 1
