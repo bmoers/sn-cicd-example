@@ -6,6 +6,24 @@ const CICD = require('sn-cicd');
 
 const rp = require('request-promise');
 
+(function () {
+    console.log('process.env.NODE_EXTRA_CA_CERTS', process.env.NODE_EXTRA_CA_CERTS)
+    if (!process.env.NODE_EXTRA_CA_CERTS) return;
+    try {
+        const extraca = require("fs").readFileSync(process.env.NODE_EXTRA_CA_CERTS);
+        var NativeSecureContext = process.binding('crypto').SecureContext;
+        var oldaddRootCerts = NativeSecureContext.prototype.addRootCerts;
+        NativeSecureContext.prototype.addRootCerts = function () {
+            var ret = oldaddRootCerts.apply(this, arguments);
+            this.addCACert(extraca);
+            return ret;
+        };
+    } catch (e) {
+        console.warn("NODE_EXTRA_CA_CERTS not found under", process.env.NODE_EXTRA_CA_CERTS)
+    }
+
+})();
+
 /*
     This module is extending sn-cicd (github.com/bmoers/sn-cicd)
     Feel free to add your code to below functions.
@@ -408,27 +426,27 @@ CICD.prototype.gitPullRequestProxyConvertBody = function (body) {
                 branch: undefined
             }
         }, {
-                action: (gitPayload.action == 'closed' && pr.merged) ? 'merged' : (gitPayload.action == 'closed' && !pr.merged) ? 'declined' : gitPayload.action,
-                mergeId: pr.merge_commit_sha,
-                request: {
-                    id: pr.number,
-                    name: pr.title,
-                    url: pr.html_url
-                },
-                author: {
-                    name: pr.user.login
-                },
-                source: {
-                    project: pr.head.repo.full_name.split('/')[0],
-                    repository: pr.head.repo.full_name.split('/')[1],
-                    branch: pr.head.ref
-                },
-                target: {
-                    project: pr.base.repo.full_name.split('/')[0],
-                    repository: pr.base.repo.full_name.split('/')[1],
-                    branch: pr.base.ref
-                }
-            });
+            action: (gitPayload.action == 'closed' && pr.merged) ? 'merged' : (gitPayload.action == 'closed' && !pr.merged) ? 'declined' : gitPayload.action,
+            mergeId: pr.merge_commit_sha,
+            request: {
+                id: pr.number,
+                name: pr.title,
+                url: pr.html_url
+            },
+            author: {
+                name: pr.user.login
+            },
+            source: {
+                project: pr.head.repo.full_name.split('/')[0],
+                repository: pr.head.repo.full_name.split('/')[1],
+                branch: pr.head.ref
+            },
+            target: {
+                project: pr.base.repo.full_name.split('/')[0],
+                repository: pr.base.repo.full_name.split('/')[1],
+                branch: pr.base.ref
+            }
+        });
     });
 };
 
