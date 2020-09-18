@@ -7,7 +7,6 @@ const CICD = require('sn-cicd');
 const rp = require('request-promise');
 
 (function () {
-    console.log('process.env.NODE_EXTRA_CA_CERTS', process.env.NODE_EXTRA_CA_CERTS)
     if (!process.env.NODE_EXTRA_CA_CERTS) return;
     try {
         const extraca = require("fs").readFileSync(process.env.NODE_EXTRA_CA_CERTS);
@@ -84,7 +83,9 @@ CICD.prototype.registerGitHubWebHook = function (repoName) {
                     "name": "web",
                     "active": true,
                     "events": [
-                        "pull_request"
+                        "pull_request",
+                        "commit_comment",
+                        "pull_request_review_comment"
                     ],
                     "config": {
                         "url": `https://${process.env.CICD_WEBHOOK_PROXY_SERVER}.${process.env.CICD_WEBHOOK_DOMAIN || 'service-now.com'}/api/devops/cicd/pull_request`,
@@ -397,12 +398,15 @@ CICD.prototype.gitPullRequestProxyConvertBody = function (body) {
 }
         */
         const gitPayload = body;
-        const pr = gitPayload.pull_request;
+        const comment = gitPayload.comment;
+        const pr = (comment) ? gitPayload.issue : gitPayload.pull_request;
+        if(comment)
+            gitPayload.action = 'comment';
 
         if (!pr)
             return {};
-
-        return assign({
+    
+        const out = assign({
             action: undefined,
             comment: undefined,
             mergeId: undefined,
@@ -437,16 +441,19 @@ CICD.prototype.gitPullRequestProxyConvertBody = function (body) {
                 name: pr.user.login
             },
             source: {
-                project: pr.head.repo.full_name.split('/')[0],
-                repository: pr.head.repo.full_name.split('/')[1],
-                branch: pr.head.ref
+                project: pr.head ? pr.head.repo.full_name.split('/')[0] : undefined,
+                repository: pr.head ? pr.head.repo.full_name.split('/')[1] : undefined,
+                branch: pr.head ? pr.head.ref : undefined
             },
             target: {
-                project: pr.base.repo.full_name.split('/')[0],
-                repository: pr.base.repo.full_name.split('/')[1],
-                branch: pr.base.ref
-            }
+                project: pr.base ? pr.base.repo.full_name.split('/')[0] : undefined,
+                repository: pr.base ? pr.base.repo.full_name.split('/')[1] : undefined,
+                branch: pr.base ? pr.base.ref : undefined
+            },
+            comment : (gitPayload.comment && gitPayload.comment.body != undefined) ? gitPayload.comment.body : undefined
         });
+
+        return out;
     });
 };
 
