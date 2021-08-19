@@ -1,44 +1,178 @@
 version: "3.2"
 
 services:
-  mid-server:
-    image: moers/mid-server:madrid
-    hostname: mid-madrid
-    env_file: mid.env
-    volumes: ["./logs:/opt/agent/logs"]
-    networks:
-      - backend
+  traefik:
+    #container_name: traefik
+    image: traefik:2.2
+    restart: unless-stopped
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./temp/letsencrypt:/letsencrypt"
+      - "./dynamic-conf.yml:/dynamic-conf.yml"
+    command:
+      #- "--log.level=DEBUG"
+      #- "--api.insecure=true"
+      #- "--providers.docker=true"
+      #- "--providers.docker.network=web"
+      - "--providers.docker.exposedbydefault=false"
 
-  cicd:
-    image: sn-cicd-example
+      #- "--providers.docker.network=sw-cicd_frontend-01,sw-cicd_frontend-02"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure-alt.address=:8443"
+      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - "--certificatesresolvers.mytlschallenge.acme.email=webmaster@moers.ch"
+      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+      - "--providers.file.filename=/dynamic-conf.yml"
+    ports:
+      # Port 80 is used for HTTP traffic
+      - 80:80
+      - 8080:8080
+      # Port 443 is used for HTTPS traffic
+      - 443:443
+      # Port 8443 is for HTTPS traffic to Portainer
+      - 8443:8443
+    networks:
+      - frontend-01
+      - frontend-02
+
+
+  cicd-server-01:
+    #image: sw-cicd-server
+    #restart: unless-stopped
     build: .
     env_file: .env
-    ports:
-      - 8080:8080
-      - 8443:8443
-      # websocket
-      - 4443:4443
-    volumes:
-      - "./root:/opt/cicd"
-      # don't do this in prod!
-      - "~/.ssh:/home/node/.ssh"
-    networks:
-      - backend
+    command: npm run server-wait 
+    #--node-flags --max-old-space-size=1536 --no-warnings
+    environment:
+      - WAIT_HOSTS=mongo:27017
+      - WAIT_HOSTS_TIMEOUT=120
+      - CICD_EB_WORKER_CLUSTER_NUM=0
+      - INSTANCE_ID=0
+      - CICD_EB_HOST_SERVER_KEY=/usr/src/app/cert/eb-server/key.pem
+      - CICD_EB_HOST_SERVER_CERT=/usr/src/app/cert/eb-server/crt.pem
+      - CICD_EB_HOST_SERVER_CA=/usr/src/app/cert/eb-server/ca-crt.pem
 
-#  mongo:
-#    container_name: mongo
-#    image: mongo
-#    restart: always
-#    environment:
-#      - MONGO_INITDB_ROOT_USERNAME=root
-#      - MONGO_INITDB_ROOT_PASSWORD=passwd
-#      - MONGO_NON_ROOT_USERNAME=cicd
-#      - MONGO_NON_ROOT_PASSWORD=passwd
-#    volumes:
-#      - ./root/mongo:/data/db
-#      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-#    networks:
-#     - backend
+    ports:
+      - 18080:8080
+      - 18443:8443
+
+    volumes:
+      - ./temp/cicd-server-01/var:/opt/cicd/var
+  
+      
+    networks:
+      frontend-01:
+        aliases:
+          - cicd-server
+      backend-01:
+         aliases:
+          - cicd-server
+
+  cicd-worker-01:
+    #image: sw-cicd-worker
+    #restart: unless-stopped
+    build: .
+    env_file: .env
+    command: npm run worker-wait 
+    environment:
+      - WAIT_HOSTS=mongo:27017, cicd-server:4443
+      - WAIT_HOSTS_TIMEOUT=120
+      - CICD_EB_WORKER_CLUSTER_NUM=2
+      - CICD_EB_HOST_NAME=cicd-server
+      - CICD_EB_HOST_CLIENT_KEY=/usr/src/app/cert/eb-client/key.pem
+      - CICD_EB_HOST_CLIENT_CERT=/usr/src/app/cert/eb-client/crt.pem
+      - CICD_EB_HOST_CLIENT_CA=/usr/src/app/cert/eb-server/ca-crt.pem
+
+    volumes:
+      - ./temp/cicd-worker-01/var:/opt/cicd/var
+
+    networks:
+      backend-01:
+        aliases:
+         - cicd-worker
+
+
+
+  cicd-server-02:
+    #image: sw-cicd-server
+    #restart: unless-stopped
+    build: .
+    env_file: .env
+    command: npm run server-wait 
+    environment:
+      - WAIT_HOSTS=mongo:27017
+      - WAIT_HOSTS_TIMEOUT=120
+      - CICD_EB_WORKER_CLUSTER_NUM=0
+      - CICD_EB_HOST_SERVER_KEY=/usr/src/app/cert/eb-server/key.pem
+      - CICD_EB_HOST_SERVER_CERT=/usr/src/app/cert/eb-server/crt.pem
+      - CICD_EB_HOST_SERVER_CA=/usr/src/app/cert/eb-server/ca-crt.pem
+
+    ports:
+      - 28080:8080
+      - 28443:8443
+    volumes:
+      - ./temp/cicd-server-02/var:/opt/cicd/var   
+
+    networks:
+      frontend-02:
+        aliases:
+          - cicd-server
+      backend-02:
+         aliases:
+          - cicd-server
+
+
+  cicd-worker-02:
+    #image: sw-cicd-worker
+    #restart: unless-stopped
+    build: .
+    env_file: .env
+    command: npm run worker-wait 
+    environment:
+      - WAIT_HOSTS=mongo:27017, cicd-server:4443
+      - WAIT_HOSTS_TIMEOUT=120
+      - CICD_EB_WORKER_CLUSTER_NUM=2
+      - CICD_EB_HOST_NAME=cicd-server
+      - CICD_EB_HOST_CLIENT_KEY=/usr/src/app/cert/eb-client/key.pem
+      - CICD_EB_HOST_CLIENT_CERT=/usr/src/app/cert/eb-client/crt.pem
+      - CICD_EB_HOST_CLIENT_CA=/usr/src/app/cert/eb-server/ca-crt.pem
+
+    volumes:
+      - ./temp/cicd-worker-02/var:/opt/cicd/var
+
+    networks:
+      backend-02:
+        aliases:
+          - cicd-worker
+
+  mongo:
+    image: mongo:4.0.24
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=passwd
+      - MONGO_INITDB_DATABASE=cicd
+
+    ports:
+      - 27017:27017
+    volumes:
+      - ./temp/mongo:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      backend-01:
+         aliases:
+          - mongo-db
+      backend-02:
+         aliases:
+          - mongo-db
 
 networks:
-  backend:
+  frontend-01:
+    driver: bridge
+  frontend-02:
+    driver: bridge
+  backend-01:
+    driver: bridge
+  backend-02:
+    driver: bridge
