@@ -73,3 +73,5 @@ bitbucket-config*
 server-options.json
 
 /root
+/temp
+.server-id

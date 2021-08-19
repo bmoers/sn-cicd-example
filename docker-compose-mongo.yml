@@ -1,0 +1,18 @@
+version: "3.2"
+
+services:
+  mongo:
+    container_name: mongo
+    image: mongo
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=passwd
+      - MONGO_NON_ROOT_USERNAME=cicd
+      - MONGO_NON_ROOT_PASSWORD=passwd
+      - MONGO_INITDB_DATABASE=cicd
+    ports:
+      - 27017:27017
+    volumes:
+      - ./root/mongo:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro

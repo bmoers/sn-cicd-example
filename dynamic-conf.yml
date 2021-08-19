@@ -1,0 +1,22 @@
+http:
+  routers:
+    cicd-server:
+      entryPoints:
+        - "web"
+      rule: "Host(`cicd-server.127.0.0.1.nip.io`)"
+      service: cicd-server
+  services:
+    cicd-server:
+      loadBalancer:
+        sticky:
+          cookie:
+            name: "_tr1"
+            httpOnly: true
+        passHostHeader: true
+        servers:
+          - url: "http://cicd-server-01:8080/"
+          - url: "http://cicd-server-02:8080/"
+        healthCheck:
+          path: /eb/worker
+          interval: "10s"
+          timeout: "5s"
