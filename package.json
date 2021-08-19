@@ -4,9 +4,11 @@
   "description": "Sample implementation of sn-cicd",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "worker": "node worker.js",
-    "server": "node server.js",
+    "start": "node  --max-old-space-size=2048 server.js",
+    "worker": "node  --max-old-space-size=2048 worker.js",
+    "server": "node  --max-old-space-size=2048 server.js",
+    "server-wait": "/wait && node --max-old-space-size=2048 server.js",
+    "worker-wait": "/wait && node --max-old-space-size=2048 worker.js",
     "devServer": "nodemon --ignore db/**/* --verbose --delay 2 server.js",
     "devWorker": "nodemon --ignore db/**/* --verbose --delay 2 worker.js"
   },
@@ -14,11 +16,13 @@
   "license": "ISC",
   "dependencies": {
     "bluebird": "^3.7.2",
-    "dotenv": "^6.0.0",
-    "nodemon": "^2.0.4",
+    "dotenv": "^10.0.0",
     "object-assign-deep": "^0.4.0",
     "request": "^2.88.2",
-    "request-promise": "4.1.0",
-    "sn-cicd": "github:bmoers/sn-cicd#semver:^4"
+    "request-promise": "^4.2.6",
+    "sn-cicd": "^4.9.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }
